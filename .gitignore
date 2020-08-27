@@ -1,0 +1,12 @@
+/Bin/VCam.ax
+/Bin/camsourcetest.exe
+/Bin/camsourcetest.iobj
+/Bin/camsourcetest.ipdb
+/camsourcetest/x64/**
+/Filters/baseclasses/x64/**
+/Filters/Release/**
+/Filters/x64/**
+/Filters/.vs/**
+/node/build/**
+/node/node_modules/**
+
