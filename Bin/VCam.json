@@ -3,7 +3,9 @@
     "clsis":"{681132b3-a303-4f8a-8424-dbc2b8c1f198}",
     "resolutions": [
         {"width":640,"height":480,"time":333333},
-        {"width":1080,"height":768,"time":333333}
+        {"width":1024,"height":768,"time":333333},
+        {"width":1920,"height":1080,"time":333333},
+        {"width":4096,"height":2160,"time":333333}
     ],   
     "data":"memnamedata",
     "config":"memnameconfig",

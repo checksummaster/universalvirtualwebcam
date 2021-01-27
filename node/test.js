@@ -1,4 +1,5 @@
 var o = require('./build/Release/vcam.node')
+var option = require(`${__dirname}/../bin/Vcam.json`);
 
 var prec = 2;
 const height=80*prec;    
@@ -33,16 +34,26 @@ function burn(twidth,theight,buffer) {
     }
 }
 
-var d = o.init()
-var buffer;
-while(!d.success) {
-    d = o.init();
-    
-}
+var d;
+
+console.log('init');
+do {
+    d = o.init(option);
+} while(!d.success || d.width === 0)
+
 console.log(d);
-buffer = Buffer.alloc(d.width * d.height * d.bitcount/8); 
-while(true) {
+var buffer = Buffer.alloc(d.width * d.height * d.bitcount/8); 
+while(d.success) {
     burn(d.width , d.height, buffer);
-    d = o.update(buffer);
+    var d2 = o.update(buffer);
+    if (   d2.width !== d.width 
+        || d2.height !== d.height 
+        || d2.bitcount !== d.bitcount
+        || d2.success === false) {
+            console.log('break ',d2);
+            d = d2;
+            buffer = Buffer.alloc(d.width * d.height * d.bitcount/8); 
+        }
     console.log(d);
 }
+o.term();

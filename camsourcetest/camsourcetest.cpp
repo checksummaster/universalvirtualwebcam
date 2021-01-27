@@ -11,12 +11,14 @@ BITMAPINFOHEADER bi;
 int anim = 1;
 int line = 0;
 
+
+
 int _tmain()
 {
 	printf("Open cam\n");
 	while (!_kbhit() && !_camsource.init() ) {}
 
-	_camsource.fastget = true;
+	_camsource.fastget = false;
 
 	while (!_kbhit()) {
 		BYTE* buf = (BYTE *)_camsource.get(&bi);
@@ -35,6 +37,7 @@ int _tmain()
 				}
 				memset(&buf[line++ * bi.biWidth * bi.biBitCount / 8], 0xFF, bi.biWidth * bi.biBitCount / 8 * 10);
 				break;
+
 			}
 		}
 		_camsource.release();

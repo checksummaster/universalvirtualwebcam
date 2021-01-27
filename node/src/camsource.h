@@ -8,9 +8,9 @@ struct camsource {
 
 	unsigned size;
 
-	const char* memnamedata = "memnamedata";
-	const char* memnameconfig = "memnameconfig";
-	const char* memnamelock = "memnamelock";
+char memnamedata[1024];
+char memnameconfig[1024];
+char memnamelock[1024];
 
 	bool fastget;
 
@@ -20,14 +20,29 @@ struct camsource {
 	}
 
 	~camsource() {
+		close();
+	}
+
+	void close() {
 		if (pBuf) UnmapViewOfFile(pBuf);
 		if (hMapFile) CloseHandle(hMapFile);
 		if (bi) UnmapViewOfFile(bi);
 		if (hMapFile2) CloseHandle(hMapFile2);
 		if (m_hMutex) CloseHandle(m_hMutex);
+		pBuf = NULL;
+		hMapFile = NULL;
+		bi = NULL;
+		hMapFile2 = NULL;
+		m_hMutex = NULL;
 	}
 
-	bool init(BITMAPINFOHEADER* _bi) {
+	bool init(BITMAPINFOHEADER* _bi,const char *_memnamedata,const char *_memnameconfig,const char *_memnamelock) {
+
+		strcpy(memnamedata,_memnamedata);
+		strcpy(memnameconfig,_memnameconfig);
+		strcpy(memnamelock,_memnamelock);
+
+
 		hMapFile2 = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, memnameconfig);
 		if (hMapFile2 != NULL) {			
 			bi = (BITMAPINFOHEADER*)MapViewOfFile(hMapFile2, FILE_MAP_ALL_ACCESS, 0, 0, sizeof(BITMAPINFOHEADER));

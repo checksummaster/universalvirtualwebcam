@@ -215,7 +215,7 @@ __declspec(dllexport) BOOL APIENTRY DllMain(HANDLE hModule, DWORD  dwReason, LPV
 
 		resolutionsize = (int)config["resolutions"].size();
 
-
+/*
 		{char str[1024]; wsprintfA(str, "[ALEX] -----------------------------------------"); OutputDebugStringA(str); printf(str); }
 		{char str[1024]; wsprintfA(str, "[ALEX] JSON %s\n", szFileName); OutputDebugStringA(str); printf(str); }
 		{char str[1024]; wsprintfA(str, "[ALEX] name %S\n", name); OutputDebugStringA(str); printf(str); }
@@ -224,7 +224,7 @@ __declspec(dllexport) BOOL APIENTRY DllMain(HANDLE hModule, DWORD  dwReason, LPV
 		{char str[1024]; wsprintfA(str, "[ALEX] memnameconfig %S\n", memnameconfig); OutputDebugStringA(str); printf(str); }
 		{char str[1024]; wsprintfA(str, "[ALEX] memnamelock %S\n", memnamelock); OutputDebugStringA(str); printf(str); }
 		{char str[1024]; wsprintfA(str, "[ALEX] size %d\n", resolutionsize); OutputDebugStringA(str); printf(str); }
-
+*/
 		resolution = new struct RESOLUTION[resolutionsize]; 
 		int c = 0;
 		for (json::iterator it = config["resolutions"].begin(); it != config["resolutions"].end(); ++it) {
