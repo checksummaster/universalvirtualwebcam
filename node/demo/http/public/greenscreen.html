@@ -1,0 +1,107 @@
+<html>
+    <body>
+        <select id="select"></select><button id="start">Start</button><br>
+        <canvas id="canvas1" width="300" height="300"></canvas>
+        <canvas id="canvas2" width="300" height="300"></canvas>
+        <video id="video" autoplay="true">
+        </video> 
+    </body>
+
+    <script>
+    const socket  = new WebSocket('ws://localhost:3000');
+
+    var d;
+    var buffer;
+    var canvas,ctx;
+    var canvas2,ctx2;   
+    var video = document.getElementById('video'); 
+
+
+    navigator.mediaDevices.enumerateDevices().then((mediaDevices) => {
+        const select = document.getElementById('select')
+        select.innerHTML = '';
+        select.appendChild(document.createElement('option'));
+        let count = 1;
+        mediaDevices.forEach(mediaDevice => {
+            if (mediaDevice.kind === 'videoinput') {
+            const option = document.createElement('option');
+            option.value = mediaDevice.deviceId;
+            const label = mediaDevice.label || `Camera ${count++}`;
+            const textNode = document.createTextNode(label);
+            option.appendChild(textNode);
+            select.appendChild(option);
+            }
+        });
+    });
+
+    document.getElementById('start').addEventListener('click', event => {
+  
+        const videoConstraints = {};
+        if (select.value !== '') {
+            videoConstraints.deviceId = { exact: select.value };
+
+            const constraints = {
+                video: videoConstraints,
+                audio: false
+            };
+
+
+            if (navigator.mediaDevices.getUserMedia) {
+                navigator.mediaDevices.getUserMedia(constraints)
+                    .then(function (stream) {
+                        video.srcObject = stream;
+                    })
+                    .catch(function (err0r) {
+                        console.log("Something went wrong!");
+                    });
+            }
+        }
+    });
+
+    function send()
+    {
+        if (d) {
+            ctx.drawImage(video,0,0,canvas.width, canvas.height)
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var j = 0;
+            const view = new Uint8Array(buffer);
+            for (var i = 0; i < buffer.byteLength; i+=3) {
+                let r = imgData.data[j+0];
+                let g = imgData.data[j+1];
+                let b = imgData.data[j+2];
+                if ( g > 100 && r < 150 && b < 150) {
+                    imgData.data[j+0] = 0xFF;
+                    imgData.data[j+1] = 0x00;
+                    imgData.data[j+2] = 0x00;
+                } 
+                view[i] = imgData.data[j+2];
+                view[i+1] = imgData.data[j+1];
+                view[i+2] = imgData.data[j+0];
+                
+                j += 4;
+            }
+            ctx2.putImageData(imgData,0,0);
+            socket.send(buffer)
+        }
+        setTimeout(send,0);
+    }
+
+    socket.addEventListener('open', function (event) {
+        send();
+    });
+
+    socket.addEventListener('message', function (event) {
+        d = JSON.parse(event.data);
+        canvas = document.getElementById('canvas1');
+        canvas2 = document.getElementById('canvas2');
+        canvas.width = d.width;
+        canvas.height = d.height;
+        canvas2.width = d.width;
+        canvas2.height = d.height;
+        ctx = canvas.getContext('2d');
+        ctx2 = canvas2.getContext('2d');
+        buffer = new ArrayBuffer(d.width*d.height*d.bitcount/8);
+    });
+    </script>
+
+</html>

@@ -1,0 +1,50 @@
+<html>
+    <body>
+        <canvas id="mycanvas" width="300" height="300"></canvas>
+        <video id="video" controls loop>
+            <source src="test.mp4" type="video/mp4">
+        </video> 
+    </body>
+
+    <script>
+    const socket  = new WebSocket('ws://localhost:3000');
+
+    var d;
+    var buffer;
+    var canvas,ctx;   
+    var video; 
+
+    function send()
+    {
+        if (d) {
+            ctx.drawImage(video,0,0,canvas.width, canvas.height)
+            var imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            var j = 0;
+            const view = new Uint8Array(buffer);
+            for (var i = 0; i < buffer.byteLength; i+=3) {
+                view[i] = imgData.data[j+2];
+                view[i+1] = imgData.data[j+1];
+                view[i+2] = imgData.data[j+0];
+                j += 4;
+            }
+            socket.send(buffer)
+        }
+        setTimeout(send,0);
+    }
+
+    socket.addEventListener('open', function (event) {
+        send();
+    });
+
+    socket.addEventListener('message', function (event) {
+        d = JSON.parse(event.data);
+        canvas = document.getElementById('mycanvas');
+        canvas.width = d.width;
+        canvas.height = d.height;
+        ctx = canvas.getContext('2d');
+        video = document.getElementById('video');
+        buffer = new ArrayBuffer(d.width*d.height*d.bitcount/8);
+    });
+    </script>
+
+</html>

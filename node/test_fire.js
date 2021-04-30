@@ -50,7 +50,6 @@ while(d.success) {
         || d2.height !== d.height 
         || d2.bitcount !== d.bitcount
         || d2.success === false) {
-            console.log('break ',d2);
             d = d2;
             buffer = Buffer.alloc(d.width * d.height * d.bitcount/8); 
         }

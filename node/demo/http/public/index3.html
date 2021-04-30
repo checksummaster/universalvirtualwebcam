@@ -1,0 +1,48 @@
+<html>
+    <body>
+        <video id="video" autoplay="true">
+
+        </video>
+        <canvas id="canvas1" width="300" height="300"></canvas>
+        <canvas id="canvas2" width="300" height="300"></canvas>
+        
+        </video> 
+    </body>
+
+    <script>
+    const socket  = new WebSocket('ws://localhost:3000');
+
+    var d;
+    var buffer;
+    var canvas,ctx;
+    var canvas2,ctx2;   
+    var video = document.getElementById('video'); 
+
+
+  
+
+
+
+    if (navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({
+          video: {
+            videoKind: {exact: "depth"}
+          }
+        })
+        .then(function (stream) {
+
+            const track = stream.getVideoTracks()[1];
+            let settings = track.getSettings ? track.getSettings() : null;
+            console.log(settings.videoKind);
+            video.srcObject = stream;
+        })
+        .catch(function (err0r) {
+            console.log("Something went wrong!");
+        });
+    }
+
+
+
+    </script>
+
+</html>

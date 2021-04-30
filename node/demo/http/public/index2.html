@@ -1,0 +1,151 @@
+<html>
+    <body>
+        <canvas id="canvas" width="300" height="300"></canvas>
+        <canvas id="canvas2" width="640" height="480"></canvas>
+        <video id="video" autoplay="true">
+        </video> 
+    </body>
+
+    <script>
+ 
+    var video = document.getElementById('video'); 
+    var canvas = document.getElementById('canvas');
+    var canvas2 = document.getElementById('canvas2');
+    var context_2d = canvas2.getContext('2d');
+
+    function getConstraintsForDepthDevice() {
+  return new Promise(function(resolve, reject) {
+    navigator.mediaDevices.enumerateDevices()
+    .then(function(devices) {
+      for (var i = 0; i < devices.length; ++i) {
+        if (devices[i].label.indexOf("Depth") != -1) {
+          return resolve({video:{deviceId: {exact: devices[i].deviceId}}});
+        }
+      }
+      return reject("No depth device found");
+    })
+  });
+}
+
+function getDepthStream() { 
+  return new Promise(function(resolve, reject) {
+    getConstraintsForDepthDevice()
+    .then(function(constraints) {
+      if (!constraints)
+        return reject("No depth device found");
+      return navigator.mediaDevices.getUserMedia(constraints);
+    }).then(function(stream) {
+      return resolve(stream);
+    });
+  });
+}
+
+
+getDepthStream().then(function(stream) {
+  video.srcObject =stream;
+});
+
+var gl = canvas.getContext("webgl2");
+if (gl) {
+  // The extension tells us if we can use single color component R32F
+  // texture format.
+  gl.color_buffer_float_ext = gl.getExtension('EXT_color_buffer_float');
+} else {
+  gl = canvas.getContext("webgl");
+}
+
+// Create the texture.
+var depth_texture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, depth_texture);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+// Create a framebuffer for reading back the texture. Bind the texture to it as color attachment.
+var framebuffer = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D,depth_texture, 0);
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+var video_frame_available = false;
+
+
+function frameLoop() {
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, depth_texture);
+
+  if (video_frame_available) {
+    // Upload the video frame to texture.
+    if (gl.color_buffer_float_ext) {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, gl.RED, gl.FLOAT, video);
+    } else {
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, gl.RGBA, gl.FLOAT, video);
+    }
+
+    /// Read it back
+    read_format = gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_FORMAT);
+    if (read_format == gl.RED && gl.getParameter(gl.IMPLEMENTATION_COLOR_READ_TYPE) == gl.FLOAT) {
+        read_buffer = new Float32Array(video.videoWidth * video.videoHeight);
+    } else {
+        read_format = gl.RGBA;
+        read_buffer = new Float32Array(video.videoWidth * video.videoHeight * 4);
+    }
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.readPixels(0, 0, video.videoWidth, video.videoHeight, read_format, gl.FLOAT,read_buffer);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+  }
+
+  // Insert draw code here.
+
+  window.requestAnimationFrame(frameLoop);
+} 
+video.oncanplay = function(){ 
+    video_frame_available=true; 
+    window.requestAnimationFrame(frameLoop);
+
+
+    setInterval(() => {
+        putReadPixelsTo2DCanvas();
+    }, 10);
+
+    
+}
+
+function swap16(val) {
+
+    return ((val & 0xFF) << 8)
+           | ((val >> 8) & 0xFF);
+}
+
+
+
+function putReadPixelsTo2DCanvas() {
+    var img = context_2d.getImageData(0, 0, video.videoWidth, video.videoHeight);
+    var data = img.data;
+    var stride = (read_format === gl.RED) ? 1 : 4;
+    var j = 0;
+    for (var i = 0; i < data.length; i += 4, j += stride) {
+        var ov = Math.floor(read_buffer[j] * 0xFFFF);
+        var value = swap16(ov)/256
+        var value2 = ov/256
+        var h = (ov >> 8) & 0xFF;
+        var l = (ov ) & 0xFF;
+
+        if (ov !== 0) {
+          ov = ov;
+        }
+
+        data[i] = (i<data.length/2)?l:h;//read_buffer[j] * 255;
+        data[i+1] = l;
+        data[i+2] = h;
+        data[i+3] = 255;
+    }
+    context_2d.putImageData(img, 0, 0);
+}
+ 
+    </script>
+
+</html>
